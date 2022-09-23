@@ -3,20 +3,16 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\TodoRequest;
 use App\Models\Todo;
-use Illuminate\Http\Request;
-use App\Http\Requests\LoginRequest;
-use App\Http\Requests\RegisterRequest;
-use App\Models\User;
 use App\Traits\ApiResponse;
-use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Http\Request;
+use Illuminate\Http\Respons;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 class TodoController extends Controller
 {
-    use ApiResponse;
+       use ApiResponse; 
     /**
      * Display a listing of the resource.
      *
@@ -25,8 +21,11 @@ class TodoController extends Controller
     public function index()
     {
         $user = auth()->user();
-        $todos = Todo::with('user')->where('user_id', $user_id)->get();
-        return $this->apiSuccess($todos);
+        $todos = Todo::with('user')
+        -> where('user_id', $user->id)
+        ->get();
+
+    return $this->apiSuccess($todos);    
     }
 
     /**
@@ -35,10 +34,10 @@ class TodoController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(TodoRequest $request)
     {
         $request->validated();
-        
+
         $user = auth()->user();
         $todo = new Todo($request->all());
         $todo->user()->associate($user);
@@ -65,14 +64,14 @@ class TodoController extends Controller
      * @param  \App\Models\Todo  $todo
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Todo $todo)
+    public function update(TodoRequest $request, Todo $todo)
     {
-        $request->validate();
+        $request->validated();
         $todo->todo = $request->todo;
         $todo->label = $request->label;
         $todo->done = $request->done;
         $todo->save();
-        return $this->apiSuccess($todo-load('user'));
+        return $this->apiSuccess($todo->load('user'));
     }
 
     /**
@@ -83,7 +82,7 @@ class TodoController extends Controller
      */
     public function destroy(Todo $todo)
     {
-        if (auth()->user()->id == $todo->user_id){
+        if(auth()->user()->id == $todo->user_id){
             $todo->delete;
             return $this->apiSuccess($todo);
         }
